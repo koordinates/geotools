@@ -3212,8 +3212,6 @@ public final class JDBCDataStore extends ContentDataStore
             }
 
             if (att instanceof GeometryDescriptor) {
-                int i = sql.length();
-                
                 //encode as geometry
                 encodeGeometryColumn((GeometryDescriptor) att, prefix, sql, query.getHints());
                 
@@ -4621,6 +4619,7 @@ public final class JDBCDataStore extends ContentDataStore
     }
     
     public void dispose() {
+        super.dispose();
         if(dataSource != null && dataSource instanceof ManageableDataSource) {
             try {
                 ManageableDataSource mds = (ManageableDataSource) dataSource; 
@@ -4772,7 +4771,7 @@ public final class JDBCDataStore extends ContentDataStore
      */
     public List<Index> getIndexes(String typeName) throws IOException {
         // just to ensure we have the type name specified
-        SimpleFeatureType schema = getSchema(typeName);
+        getSchema(typeName);
         
         Connection cx = null;
         try {
