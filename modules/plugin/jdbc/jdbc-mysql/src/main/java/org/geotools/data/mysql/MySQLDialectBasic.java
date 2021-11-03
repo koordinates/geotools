@@ -260,4 +260,9 @@ public class MySQLDialectBasic extends BasicSQLDialect {
             throws SQLException {
         delegate.dropIndex(cx, schema, databaseSchema, indexName);
     }
+
+    @Override
+    public boolean canGroupOnGeometry() {
+        return delegate.canGroupOnGeometry();
+    }
 }

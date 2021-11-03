@@ -249,4 +249,9 @@ public class DB2SQLDialectBasic extends BasicSQLDialect {
     protected boolean supportsSchemaForIndex() {
         return delegate.supportsSchemaForIndex();
     }
+
+    @Override
+    public boolean canGroupOnGeometry() {
+        return delegate.canGroupOnGeometry();
+    }
 }

@@ -317,4 +317,9 @@ public class PostGISPSDialect extends PreparedStatementSQLDialect {
     public boolean canSimplifyPoints() {
         return delegate.canSimplifyPoints();
     }
+
+    @Override
+    public boolean canGroupOnGeometry() {
+        return delegate.canGroupOnGeometry();
+    }
 }

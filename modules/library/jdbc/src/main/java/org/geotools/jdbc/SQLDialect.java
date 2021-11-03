@@ -1467,4 +1467,12 @@ public abstract class SQLDialect {
         }
         throw new SQLException("Could not obtain " + clazz.getName() + " from " + cx.getClass());
     }
+
+    /**
+     * Returns true if this database can "group by" on a Geometry column. Defaults to false,
+     * specific implementations with this capability should override
+     */
+    public boolean canGroupOnGeometry() {
+        return false;
+    }
 }
