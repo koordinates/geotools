@@ -1475,7 +1475,8 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
                                     converter,
                                     query.getHints());
                 }
-                if (results.size() == 1) result = results.get(0);
+                if (results.size() == 1 && !(results.get(0) instanceof List))
+                    result = results.get(0);
             } finally {
                 closeSafe(rs);
                 closeSafe(st);
@@ -1484,10 +1485,9 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
             if (groupByExpressions != null && !groupByExpressions.isEmpty()) {
                 setResult(visitor, results);
                 return results;
-            } else if (setResult(visitor, results.size() > 1 ? results : result)) {
+            } else if (setResult(visitor, result == null ? results : result)) {
                 return result == null ? results : result;
             }
-
             return null;
         } catch (SQLException e) {
             throw (IOException) new IOException().initCause(e);
