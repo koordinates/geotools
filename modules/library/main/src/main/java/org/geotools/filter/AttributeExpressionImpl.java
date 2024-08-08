@@ -244,7 +244,7 @@ public class AttributeExpressionImpl extends DefaultExpression implements Proper
                                             + attPath
                                             + ") in object ("
                                             + obj
-                                            + ")");
+                                            + ")\n" + this.toDebugString());
                     if (exceptions != null) {
                         exceptions.forEach(e -> exception.addSuppressed(exception));
                     }
@@ -270,6 +270,10 @@ public class AttributeExpressionImpl extends DefaultExpression implements Proper
     @Override
     public String toString() {
         return attPath;
+    }
+
+    public String toDebugString() {
+        return "AttributeExpressionImpl(" + this.attPath + ", " + this.schema + ", " + this.namespaceSupport + ")";
     }
 
     /**

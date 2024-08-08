@@ -34,6 +34,11 @@ import org.geotools.api.filter.expression.Subtract;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.function.FilterFunction_Convert;
 
+import org.geotools.filter.AttributeExpressionImpl;
+
+import java.util.List;
+import org.geotools.referencing.CRS;
+
 /**
  * Utility class that tries to figure out the resulting type of an expression against a given
  * feature type by using static analysis.
@@ -86,13 +91,54 @@ class ExpressionTypeEvaluator implements ExpressionVisitor {
         }
     }
 
+    private static String toString(SimpleFeatureType schema) {
+        return String.join("\n", toStringArray(schema.getAttributeDescriptors()));
+    }
+
+    private static String[] toStringArray(List<AttributeDescriptor> descriptors) {
+        String[] result = new String[descriptors.size()];
+        for (int i = 0; i < descriptors.size(); i++) {
+            result[i] = toString(descriptors.get(i));
+        }
+        return result;
+    }
+
+    private static String toString(AttributeDescriptor descriptor) {
+        if (descriptor instanceof GeometryDescriptor) {
+            return toString((GeometryDescriptor) descriptor);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("AttributeDescriptor(");
+        sb.append(descriptor.getName() + ", ");
+        sb.append(getOccursStr(descriptor) + ", ");
+        sb.append("binding=" + descriptor.getType().getBinding().getSimpleName() + ")");
+        return sb.toString();
+    }
+
+    private static String toString(GeometryDescriptor descriptor) {
+        StringBuilder sb = new StringBuilder("GeometryDescriptor(");
+        sb.append(descriptor.getName() + ", ");
+        sb.append(getOccursStr(descriptor) + ", ");
+        sb.append("binding=" + descriptor.getType().getBinding().getSimpleName() + ", ");
+        sb.append("CRS=" + CRS.toSRS(descriptor.getCoordinateReferenceSystem()) + ")");
+        return sb.toString();
+    }
+
+    private static String getOccursStr(AttributeDescriptor d) {
+        return String.format(
+                "(%d,%d%s)", d.getMinOccurs(), d.getMaxOccurs(), (d.isNillable() ? ",nil" : ""));
+    }
+
     @Override
     public Object visit(PropertyName expression, Object extraData) {
+        if (expression instanceof AttributeExpressionImpl) {
+            ((AttributeExpressionImpl) expression).setLenient(false);
+        }
         AttributeDescriptor result = expression.evaluate(schema, AttributeDescriptor.class);
         if (result == null) {
             throw new IllegalArgumentException(
                     "Original feature type does not have a property named "
-                            + expression.getPropertyName());
+                            + expression.getPropertyName() + "\n" + toString(schema));
         }
 
         if (result instanceof GeometryDescriptor) {
