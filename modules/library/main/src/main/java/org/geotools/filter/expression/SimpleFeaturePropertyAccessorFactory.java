@@ -86,7 +86,7 @@ public class SimpleFeaturePropertyAccessorFactory implements PropertyAccessorFac
      * string
      */
     static final Pattern propertyPattern =
-            Pattern.compile("^(?!@)([" + NAME_START_CHAR + "][" + NAME_CHAR + "]*)(\\[1])?$");
+            Pattern.compile("^(?!@)([" + NAME_CHAR + "][" + NAME_CHAR + "]*)(\\[1])?$");
 
     @Override
     public PropertyAccessor createPropertyAccessor(
