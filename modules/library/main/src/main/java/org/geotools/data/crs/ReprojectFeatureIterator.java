@@ -17,16 +17,20 @@
 package org.geotools.data.crs;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import org.geotools.api.data.FeatureReader;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 
 /**
@@ -122,7 +126,63 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
                             .initCause(e);
         }
 
-        return SimpleFeatureBuilder.build(schema, attributes, next.getID());
+        try {
+            return SimpleFeatureBuilder.build(schema, attributes, next.getID());
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    e.getMessage()
+                            + "\n-----\n"
+                            + toString(schema)
+                            + "\n-----\n"
+                            + toString(attributes),
+                    e);
+        }
+    }
+
+    private String toString(Object[] attributes) {
+        String result = "[";
+        for (Object attr : attributes) {
+            result += attr + ",";
+        }
+        return result.substring(0, result.length() - 1) + "]";
+    }
+
+    private static String toString(SimpleFeatureType schema) {
+        return String.join("\n", toStringArray(schema.getAttributeDescriptors()));
+    }
+
+    private static String[] toStringArray(List<AttributeDescriptor> descriptors) {
+        String[] result = new String[descriptors.size()];
+        for (int i = 0; i < descriptors.size(); i++) {
+            result[i] = toString(descriptors.get(i));
+        }
+        return result;
+    }
+
+    private static String toString(AttributeDescriptor descriptor) {
+        if (descriptor instanceof GeometryDescriptor) {
+            return toString((GeometryDescriptor) descriptor);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("AttributeDescriptor(");
+        sb.append(descriptor.getName() + ", ");
+        sb.append(getOccursStr(descriptor) + ", ");
+        sb.append("binding=" + descriptor.getType().getBinding().getSimpleName() + ")");
+        return sb.toString();
+    }
+
+    private static String toString(GeometryDescriptor descriptor) {
+        StringBuilder sb = new StringBuilder("GeometryDescriptor(");
+        sb.append(descriptor.getName() + ", ");
+        sb.append(getOccursStr(descriptor) + ", ");
+        sb.append("binding=" + descriptor.getType().getBinding().getSimpleName() + ", ");
+        sb.append("CRS=" + CRS.toSRS(descriptor.getCoordinateReferenceSystem()) + ")");
+        return sb.toString();
+    }
+
+    private static String getOccursStr(AttributeDescriptor d) {
+        return String.format(
+                "(%d,%d%s)", d.getMinOccurs(), d.getMaxOccurs(), (d.isNillable() ? ",nil" : ""));
     }
 
     @Override
