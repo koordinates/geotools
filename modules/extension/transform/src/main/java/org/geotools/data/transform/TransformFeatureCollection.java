@@ -98,6 +98,11 @@ class TransformFeatureCollection extends AbstractFeatureCollection {
             // build the query against the original store
             Query txQuery = transformer.transformQuery(query);
 
+            // We do have to ensure that the transformer schema is the same as the query schema
+            // If it's different, match it to the same schema
+            if (!transformer.getSchema().equals(getSchema())) {
+                transformer.setSchema(getSchema());
+            }
             // let the world know about the query re-shaping
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(

@@ -182,6 +182,10 @@ class Transformer {
         return schema;
     }
 
+    public void setSchema(SimpleFeatureType schema) {
+        this.schema = schema;
+    }
+
     Expression getExpression(String attributeName) {
         return expressions.get(attributeName);
     }
