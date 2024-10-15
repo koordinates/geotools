@@ -66,7 +66,11 @@ class TransformFeatureCollection extends AbstractFeatureCollection {
             SimpleFeatureSource source, Transformer transformer, Query query) {
         super(retypeSchema(source.getSchema(), query));
         this.source = source;
-        this.transformer = transformer;
+        try {
+            this.transformer = retypeTransformer(transformer, this.schema);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         this.query = query;
     }
 
@@ -84,6 +88,15 @@ class TransformFeatureCollection extends AbstractFeatureCollection {
         } else {
             return SimpleFeatureTypeBuilder.retype(schema, query);
         }
+    }
+
+    static Transformer retypeTransformer(Transformer transformer, SimpleFeatureType schema)
+            throws IOException {
+        return new Transformer(
+                transformer.getSource(),
+                transformer.getName(),
+                transformer.getDefinitions(),
+                schema);
     }
 
     @Override
