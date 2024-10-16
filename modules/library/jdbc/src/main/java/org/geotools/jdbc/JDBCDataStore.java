@@ -84,6 +84,7 @@ import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
@@ -1498,28 +1499,25 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
      * Checks if the groupBy is a supported one, that is, if it's possible to turn to SQL the
      * various {@link Expression} it's using
      */
-    private boolean isSupportedGroupBy(SimpleFeatureType featureType, GroupByVisitor visitor) {
-        return visitor.getGroupByAttributes().stream()
-                .allMatch(
-                        xp -> {
-                            if (!fullySupports(xp)) return false;
-
-                            // Geometry attributes require a GeometryDescriptor to be encoded and
-                            // read back,
-                            // cannot do that with a generic expression
-                            Class type =
-                                    (Class) xp.accept(new ExpressionTypeVisitor(featureType), null);
-                            if (type == null || !Geometry.class.isAssignableFrom(type)) return true;
-
-                            // the expression is a geometry, check it's an actual known attribute,
-                            // and that the database can group on geometries
-                            return getGeometryDescriptor(featureType, xp) != null
-                                    && dialect.canGroupOnGeometry();
-                        });
+    private boolean isSupportedGroupBy(GroupByVisitor visitor) {
+        return visitor.getGroupByAttributes().stream().allMatch(xp -> fullySupports(xp));
     }
 
     private boolean fullySupports(List<Expression> expressions) {
         return expressions.stream().allMatch(e -> fullySupports(e));
+    }
+
+    /**
+     * Returns a GeometryDescriptor backing the specified expression, if it's a PropertyName
+     * matching a geometry column in the table. Null otherwise.
+     */
+    private GeometryDescriptor getGeometryDescriptor(
+            SimpleFeatureType featureType, Expression expression) {
+        if (!(expression instanceof PropertyName)) return null;
+        PropertyName pn = (PropertyName) expression;
+        AttributeDescriptor ad = featureType.getDescriptor(pn.getPropertyName());
+        if (ad instanceof GeometryDescriptor) return (GeometryDescriptor) ad;
+        return null;
     }
 
     /**
