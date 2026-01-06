@@ -990,29 +990,44 @@ public class SimpleFeatureTypeBuilder {
      * @return SimpleFeatureType containing just the types indicated by name
      */
     public static SimpleFeatureType retype(SimpleFeatureType original, List<String> attributes) {
-        SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
+        try {
+            SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
 
-        // initialize the builder
-        b.init(original);
+            // initialize the builder
+            b.init(original);
 
-        // clear the attributes
-        b.attributes().clear();
+            // clear the attributes
+            b.attributes().clear();
 
-        // add attributes in order
-        for (String type : attributes) {
-            b.add(original.getDescriptor(type));
+            // add attributes in order
+            for (String type : attributes) {
+                b.add(original.getDescriptor(type));
+            }
+
+            // handle default geometry
+            GeometryDescriptor defaultGeometry = original.getGeometryDescriptor();
+            String defaultGeometryName =
+                    defaultGeometry != null ? defaultGeometry.getLocalName() : null;
+            if (defaultGeometryName != null && attributes.contains(defaultGeometryName)) {
+                b.setDefaultGeometry(defaultGeometryName);
+            } else {
+                b.setDefaultGeometry(null);
+            }
+            return b.buildFeatureType();
+        } catch (Exception e) {
+            List<String> originalAttributeNames =
+                    original.getAttributeDescriptors().stream()
+                            .map(AttributeDescriptor::getLocalName)
+                            .collect(Collectors.toList());
+            LOGGER.warning(
+                    "retype(List<String>) failed. Original attributes: "
+                            + originalAttributeNames
+                            + ", Requested attributes: "
+                            + attributes
+                            + ", Exception: "
+                            + e);
+            throw e;
         }
-
-        // handle default geometry
-        GeometryDescriptor defaultGeometry = original.getGeometryDescriptor();
-        String defaultGeometryName =
-                defaultGeometry != null ? defaultGeometry.getLocalName() : null;
-        if (defaultGeometryName != null && attributes.contains(defaultGeometryName)) {
-            b.setDefaultGeometry(defaultGeometryName);
-        } else {
-            b.setDefaultGeometry(null);
-        }
-        return b.buildFeatureType();
     }
 
     /**
