@@ -122,6 +122,20 @@ public class PostgisJsonPathExistsTest extends SQLFilterTestSupport {
         filterToSql.encode(pointer);
         String sql = writer.toString().trim();
         assertEquals(
-                "jsonb_path_exists(OPERATIONS::jsonb, '$ ? (@.operations == \"\"'FOO\")')", sql);
+                "jsonb_path_exists(OPERATIONS::jsonb, '$ ? (@.operations == \"\\\"''FOO\")')", sql);
+    }
+
+    @Test
+    public void testFunctionJsonArrayContainsEscapingQuotesJsonPathExists() throws Exception {
+        filterToSql.setFeatureType(testSchema);
+        Function pointer =
+                ff.function(
+                        "jsonArrayContains",
+                        ff.property("OPERATIONS"),
+                        ff.literal("/won't"),
+                        ff.literal("can't"));
+        filterToSql.encode(pointer);
+        String sql = writer.toString().trim();
+        assertEquals("jsonb_path_exists(OPERATIONS::jsonb, '$ ? (@.won''t == \"can''t\")')", sql);
     }
 }
