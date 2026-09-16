@@ -285,6 +285,9 @@ public class GMLWriter {
     void coordinates(CoordinateSequence coordinates, char cs, char ts, StringBuffer sb) {
         sb.setLength(0);
         int n = coordinates.size();
+        if (n == 0) {
+            return;
+        }
         int dim = CoordinateSequences.coordinateDimension(coordinates);
         for (int i = 0; i < n; i++) {
             coordFormatter.format(coordinates.getX(i), sb).append(cs);
