@@ -45,6 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -104,6 +105,46 @@ public class WFSFeatureCollectionEncodingTest {
         b.add(new GeometryFactory().createPoint(new Coordinate(3, 3)));
         b.add(3);
         store.addFeature(b.buildFeature("three"));
+
+        tb = new SimpleFeatureTypeBuilder();
+        tb.setName("empty");
+        tb.setNamespaceURI("http://geotools.org");
+        tb.add("geometry", LineString.class, 4326);
+        tb.add("integer", Integer.class);
+        store.createSchema(tb.buildFeatureType());
+
+        b = new SimpleFeatureBuilder(store.getSchema("empty"));
+        b.add(new GeometryFactory().createLineString(new Coordinate[0]));
+        b.add(4);
+        store.addFeature(b.buildFeature("four"));
+
+        b.add(new GeometryFactory().createLineString(new Coordinate[] {new Coordinate(4, 4), new Coordinate(5, 5)}));
+        b.add(5);
+        store.addFeature(b.buildFeature("five"));
+    }
+
+    /**
+     * An empty geometry is valid and must encode as an element with no positions, rather than blowing up the whole
+     * feature collection halfway through encoding.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testEncodeFeatureCollectionWithEmptyGeometry() throws Exception {
+        net.opengis.wfs20.FeatureCollectionType fc = Wfs20Factory.eINSTANCE.createFeatureCollectionType();
+        FeatureCollection features = store.getFeatureSource("empty").getFeatures();
+        fc.getMember().add(features);
+
+        Encoder e = encoder();
+        e.getNamespaces().declarePrefix("geotools", "http://geotools.org");
+
+        Document d = e.encodeAsDOM(fc, WFS.FeatureCollection);
+
+        assertEquals(2, d.getElementsByTagName("wfs:member").getLength());
+        assertEquals(2, d.getElementsByTagName("gml:LineString").getLength());
+        NodeList posLists = d.getElementsByTagName("gml:posList");
+        assertEquals(2, posLists.getLength());
+        assertEquals("", posLists.item(0).getTextContent());
+        assertEquals("4 4 5 5", posLists.item(1).getTextContent());
     }
 
     @Test

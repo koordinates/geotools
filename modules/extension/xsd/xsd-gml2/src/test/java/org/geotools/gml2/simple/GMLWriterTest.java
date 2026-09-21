@@ -93,6 +93,15 @@ public class GMLWriterTest extends GMLTestSupport {
     }
 
     @Test
+    public void testEncodeEmptyLine() throws Exception {
+        LineStringEncoder encoder = new LineStringEncoder(gtEncoder, "gml");
+        LineString geometry = (LineString) new WKTReader2().read("LINESTRING EMPTY");
+        Document doc = encode(encoder, geometry);
+
+        assertThat(doc, hasXPath("//gml:coordinates", equalTo("")));
+    }
+
+    @Test
     public void testEncode3DLineFromLiteCS() throws Exception {
         LineStringEncoder encoder = new LineStringEncoder(gtEncoder, "gml");
         LiteCoordinateSequence cs = new LiteCoordinateSequence(new double[] {0, 0, 50, 120, 0, 100}, 3);
